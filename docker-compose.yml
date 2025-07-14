@@ -1,0 +1,41 @@
+services:
+  db:
+    image: mysql:8
+    container_name: db
+    restart: always
+    environment:
+      MYSQL_DATABASE: product
+      MYSQL_ROOT_PASSWORD: mypass123
+    ports:
+      - "3307:3306"
+    networks:
+      - product-network
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: product-review-app
+    ports:
+      - "8093:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/product
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: mypass123
+    networks:
+      - product-network
+
+networks:
+  product-network:
+    driver: bridge
+
+volumes:
+  db_data:
